@@ -26,6 +26,8 @@ const (
 	tagPrefix                  = "@"
 	dateFormat                 = "2006-01-02"
 	timeFormat                 = "15:04:05"
+	dateDivider                = "\t ----------\t --------\t \t \t"
+	rowFormat                  = "\t %s\t %s\t %s\t %s\t"
 )
 
 var (
@@ -132,18 +134,20 @@ func printLastEntries(dataDir string) {
 	}
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', tabwriter.Debug)
 	prevDate := ""
-	for entry, err := er.Read(); err != io.EOF; entry, err = er.Read() {
+	dayCounter := 0
+	for entry, err := er.Read(); err != io.EOF && dayCounter < 2; entry, err = er.Read() {
 		curDate := entry.CreatedAt.Format(dateFormat)
 		if prevDate == "" {
 			prevDate = curDate
 		}
 		if prevDate != curDate {
-			fmt.Fprintln(w, "\t\t\t\t\t")
+			fmt.Fprintln(w, dateDivider)
+			dayCounter++
 		}
 		fmt.Fprintln(
 			w,
 			fmt.Sprintf(
-				"\t %s\t %s\t %s\t %s\t",
+				rowFormat,
 				entry.CreatedAt.Format(dateFormat),
 				entry.CreatedAt.Format(timeFormat),
 				strings.Join(entry.Tags, " "),
