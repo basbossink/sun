@@ -25,9 +25,10 @@ const (
 	sunDataFileExtension       = ".sun"
 	tagPrefix                  = "@"
 	dateFormat                 = "2006-01-02"
+	weekdayFormat              = "Mon"
 	timeFormat                 = "15:04:05"
-	dateDivider                = "\t ----------\t --------\t \t \t"
-	rowFormat                  = "\t %s\t %s\t %s\t %s\t"
+	dateDivider                = "\t ---\t ----------\t --------\t \t \t"
+	rowFormat                  = "\t %s\t %s\t %s\t %s\t %s\t"
 )
 
 var (
@@ -148,7 +149,8 @@ func printLastEntries(dataDir string) {
 			w,
 			fmt.Sprintf(
 				rowFormat,
-				entry.CreatedAt.Format(dateFormat),
+				entry.CreatedAt.Format(weekdayFormat),
+				curDate,
 				entry.CreatedAt.Format(timeFormat),
 				strings.Join(entry.Tags, " "),
 				entry.Note))
