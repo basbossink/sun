@@ -130,7 +130,7 @@ func printLastEntries(dataDir string) {
 	defer f.Close()
 	er, err := NewReader(f)
 	if err != nil {
-		fmt.Errorf("could not create entry reader", err)
+		fmt.Errorf("could not create entry reader %w\n", err)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', tabwriter.Debug)
 	prevDate := ""

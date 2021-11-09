@@ -55,12 +55,9 @@ func TestWriteTwiceReadTwice(t *testing.T) {
 
 func write(entry *entry, buf *bytes.Buffer, t *testing.T) {
 	w := bufio.NewWriter(buf)
-	written, err := entry.Write(w)
+	err := entry.Write(w)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if written <= 0 {
-		t.Fatalf("expected more than zero bytes written, got %d", written)
 	}
 	w.Flush()
 }
