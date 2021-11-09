@@ -19,7 +19,7 @@ import (
 
 const (
 	timeEncodedSize            = 4
-	bufSize                    = 8 * 1024
+	bufSize                    = 16 * 1024
 	sunDataDir                 = ".sun.d"
 	sunDataFileTimestampFormat = "2006"
 	sunDataFileExtension       = ".sun"
