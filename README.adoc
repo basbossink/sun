@@ -1,0 +1,42 @@
+= sun
+Bas Bossink <bas.bossink@gmail.com>
+:toc:
+
+Stand-Up Notebook (`sun` for short), is a very simple note taking command-line application to save you from drawing a blank during stand-up meetings.
+The idea behind this application is to have a place to put short notes that are to short to track in a TODO list application but are still worth mentioning during the next stand-up meeting.
+
+== Installation
+
+Currently sun requires https://golang.org/[Go] to be installed. Once you have Go installed you can run:
+
+[source,sh,subs="attributes+"]
+----
+go install github.com/basbossink/sun@{version}
+----
+
+== Usage 
+
+=== Adding a note
+
+When adding a note you write a short sentence describing something you might want to mention during the next stand-up meetingk
+
+....
+> sun Review PR from Alice @pr1234
+....
+[TIP]
+Depending on the shell you are using the `@` character might mean something special to the shell, so if applicable use the correct escape character for your shell to prevent processing by your shell.
+
+=== Viewing notes
+....
+> sun
+ | Fri | 2021-11-19 | 11:29:04 | pr125 mca | review pr from Alice           |
+ | --- | ---------- | -------- |           |                                |
+ | Mon | 2021-11-15 | 15:02:55 | pr124     | ask Alice to review pr124      |
+ | Mon | 2021-11-15 | 11:02:27 |           | discuss failing build with Bob |
+....
+
+That's it. There is nothing to configure/tweak, there aren't any interesting command-line options. You can use `sun -v` to see the installed version.
+
+== License
+
+This software is provided under a "BSD 2-Clause License" see the link:LICENSE[LICENSE] for details.
