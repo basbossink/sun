@@ -27,6 +27,7 @@ When adding a note you write a short sentence describing something you might wan
 Depending on the shell you are using the `@` character might mean something special to the shell, so if applicable use the correct escape character for your shell to prevent processing by your shell.
 
 === Viewing notes
+
 ....
 > sun
  | Fri | 2021-11-19 | 11:29:04 | pr125 mca | review pr from Alice           |
@@ -35,7 +36,27 @@ Depending on the shell you are using the `@` character might mean something spec
  | Mon | 2021-11-15 | 11:02:27 |           | discuss failing build with Bob |
 ....
 
+sun outputs a table of as many entries there are until it sees a second day boundary in the timestamps reading from the last added note.
+
 That's it. There is nothing to configure/tweak, there aren't any interesting command-line options. You can use `sun -v` to see the installed version.
+
+== Internals 
+
+Some care was taken to ensure sun can run in constant time. Entries are appended to the file when writing, and read in reverse order from the end of the file. The file has a binary format, using a combination of https://pkg.go.dev/encoding/gob[encoding/gob] and https://pkg.go.dev/encoding/binary[encoding/binary]. This strategy was used for performance, currently sun can add and show notes in about 5ms on an old ThinkPad T440p.
+
+[svgbob]
+....
+ <~~~~ earlier part of file ~~+~~ gob encoded entry struct ~~+~~ binary encoded form of N ~~+      end of file
+                              |                              |                              |           |
+                              v                              v                              v           v
+ <----------------------------+---+------------------+-------+---+------------------+-------+-----------+
+             ...              | 0 |       ...        | N - 1 | 0 |       ...        | M - 1 | value of  |
+                              |   |                  |       |   |                  |       | M as byte |
+ <----------------------------+---+------------------+-------+---+------------------+-------+-----------+
+                              ^                                                                         ^
+                              |                                                                         |
+                              +~~~~~~~~~~~~~~ block for each entry struct in the file ~~~~~~~~~~~~~~~~~~+
+....
 
 == License
 
