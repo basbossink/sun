@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/gob"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -33,6 +34,8 @@ const (
 var (
 	ErrInsufficientSize = errors.New("buffer is to small")
 	ErrFileCorrupt      = errors.New("corrupt file")
+	Version             string
+	CommitHash          string
 )
 
 type entry struct {
@@ -256,8 +259,26 @@ func convertArgsToEntry(args []string) entry {
 	entry := entry{Note: note, Tags: tags, CreatedAt: time.Now()}
 	return entry
 }
-
+func usage() {
+	fmt.Fprintf(
+		flag.CommandLine.Output(),
+		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
+		os.Args[0])
+	fmt.Fprintln(
+		flag.CommandLine.Output(),
+		"If no arguments are given, a table with the latest notes is shown.")
+	flag.PrintDefaults()
+}
 func main() {
+	showVersion := false
+	flag.Usage = usage
+	flag.BoolVar(&showVersion, "version", false, "show version and exit")
+	flag.BoolVar(&showVersion, "v", false, "show version and exit")
+	flag.Parse()
+	if showVersion {
+		fmt.Println(os.Args[0], " version: ", Version, CommitHash)
+		os.Exit(0)
+	}
 	dataDir, err := ensureDataDir()
 	if err != nil {
 		log.Fatal(err)
