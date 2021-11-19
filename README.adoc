@@ -18,7 +18,7 @@ go install github.com/basbossink/sun@{version}
 
 === Adding a note
 
-When adding a note you write a short sentence describing something you might want to mention during the next stand-up meetingk
+When adding a note you write a short sentence describing something you might want to mention during the next stand-up meeting.
 
 ....
 > sun Review PR from Alice @pr1234
