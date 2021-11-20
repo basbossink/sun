@@ -19,16 +19,15 @@ import (
 )
 
 const (
-	bufSize                    = 16 * 1024
-	sunDataDir                 = ".sun.d"
-	sunDataFileTimestampFormat = "2006"
-	sunDataFileExtension       = ".sun"
-	tagPrefix                  = "@"
-	dateFormat                 = "2006-01-02"
-	weekdayFormat              = "Mon"
-	timeFormat                 = "15:04:05"
-	dateDivider                = "\t ---\t ----------\t --------\t \t \t"
-	rowFormat                  = "\t %s\t %s\t %s\t %s\t %s\t"
+	bufSize              = 16 * 1024
+	sunDataDir           = ".sun.d"
+	sunDataFileExtension = ".sun"
+	tagPrefix            = "@"
+	dateFormat           = "2006-01-02"
+	weekdayFormat        = "Mon"
+	timeFormat           = "15:04:05"
+	dateDivider          = "\t ---\t ----------\t --------\t \t \t"
+	rowFormat            = "\t %s\t %s\t %s\t %s\t %s\t"
 )
 
 var (
@@ -157,8 +156,11 @@ func ensureDataDir() (string, error) {
 	return dataDir, nil
 }
 
-func openDataFile(dataDir string) *os.File {
-	filename := calculateFilename(dataDir)
+func openDataFile(dataDir string) (*os.File, error) {
+	filename, err := calculateFilename(dataDir)
+	if err != nil {
+		return nil, err
+	}
 	f, err := os.OpenFile(filename, os.O_RDONLY, 0600)
 	if err != nil {
 		log.Fatalf("could not open file %v", err)
@@ -173,11 +175,14 @@ func openDataFile(dataDir string) *os.File {
 			log.Fatalf("could not seek in file %v", errr)
 		}
 	}
-	return f
+	return f, nil
 }
 
 func printLastEntries(dataDir string) {
-	f := openDataFile(dataDir)
+	f, err := openDataFile(dataDir)
+	if err != nil {
+		return
+	}
 	defer f.Close()
 	er, err := NewReader(f)
 	if err != nil {
@@ -219,7 +224,7 @@ func writeRow(w *tabwriter.Writer, entry *entry, prevDate string, dayCount int) 
 }
 
 func writeNewEntry(dataDir string, args []string) {
-	filename := calculateFilename(dataDir)
+	filename := calculateSunFilename(dataDir, time.Now().Year())
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		log.Fatalf("could not open file %f", err)
@@ -232,14 +237,27 @@ func writeNewEntry(dataDir string, args []string) {
 	}
 }
 
-func calculateFilename(dataDir string) string {
-	filename := filepath.Join(
+func calculateSunFilename(dataDir string, year int) string {
+	return filepath.Join(
 		dataDir,
 		fmt.Sprintf(
-			"%s%s",
-			time.Now().Format(sunDataFileTimestampFormat),
+			"%d%s",
+			year,
 			sunDataFileExtension))
-	return filename
+}
+
+func calculateFilename(dataDir string) (string, error) {
+	currentYear := time.Now().Year()
+	filename := calculateSunFilename(dataDir, currentYear)
+	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
+		previousYear := currentYear - 1
+		filename = calculateSunFilename(dataDir, previousYear)
+		if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+		return filename, nil
+	}
+	return filename, nil
 }
 
 func convertArgsToEntry(args []string) entry {

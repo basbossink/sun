@@ -36,13 +36,18 @@ Depending on the shell you are using the `@` character might mean something spec
  | Mon | 2021-11-15 | 11:02:27 |           | discuss failing build with Bob |
 ....
 
-sun outputs a table of as many entries there are until it sees a second day boundary in the timestamps reading from the last added note.
+sun outputs a table of as many entries there are until it sees a second day boundary in the time-stamps reading from the last added note.
 
-That's it. There is nothing to configure/tweak, there aren't any interesting command-line options. You can use `sun -v` to see the installed version.
+That's it. There is nothing to configure/tweak, there aren't any interesting command-line options. You can use `sun -v` or `sun -version` to see the installed version.
+
+
+== Storage
+
+sun stores it's data in the `.sun.d` sub-directory of whatever is returned by the https://pkg.go.dev/os#UserHomeDir[os.UserHomeDir] function. The data files use the current year as their base-name and have a `.sun` file extension. To keep things simple no special care is given to year rollover apart from the fact that if no file exists for the current year, last year's file is read. Adding a note always creates a file for the current year if it does not exist yet.
 
 == Internals 
 
-Some care was taken to ensure sun can run in constant time. Entries are appended to the file when writing, and read in reverse order from the end of the file. The file has a binary format, using a combination of https://pkg.go.dev/encoding/gob[encoding/gob] and https://pkg.go.dev/encoding/binary[encoding/binary]. This strategy was used for performance, currently sun can add and show notes in about 5ms on an old ThinkPad T440p.
+Some care was taken to ensure sun can run in constant time. Entries are appended to the current years data file when writing, and read in reverse order from the end of the file. The file has a binary format, using a combination of https://pkg.go.dev/encoding/gob[encoding/gob] and https://pkg.go.dev/encoding/binary[encoding/binary]. This strategy was used for performance, currently sun can add and show notes in about 5ms on an old ThinkPad T440p laptop.
 
 [svgbob]
 ....
