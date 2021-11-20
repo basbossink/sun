@@ -7,7 +7,13 @@ The idea behind this application is to have a place to put short notes that are 
 
 == Installation
 
-Currently sun requires https://golang.org/[Go] to be installed. Once you have Go installed you can run:
+=== From a GitHub release
+
+Find the appropriate zip file for your platform and architecture on the GitHub https://github.com/basbossink/sun/releases[releases] page, download it, unzip it, and put the unpacked binary file in your `PATH`.
+
+=== From sources
+
+Installing sun from sources requires https://golang.org/[Go] to be installed. Once you have Go installed you can run:
 
 [source,sh,subs="attributes+"]
 ----
