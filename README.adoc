@@ -5,9 +5,11 @@
 Stand-Up Notebook (`sun` for short), is a very simple note taking command-line application to save you from drawing a blank during stand-up meetings.
 The idea behind this application is to have a place to put short notes that are to short to track in a TODO list application but are still worth mentioning during the next stand-up meeting.
 
+ifdef::env-github[]
 == Documentation
 
 This documentation can best be viewed at https://stand-up-notes.org[stand-up-notes.org] because it contains an https://asciidoctor.org/[Asciidoctor] rendered version of this document with the proper attributes set and an svg rendered version of the diagram below.
+endif::[]
 
 == Installation
 
