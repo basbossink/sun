@@ -1,13 +1,19 @@
 = sun
-Bas Bossink <bas.bossink@gmail.com>
+:docinfo: private-head
 :toc:
 
 Stand-Up Notebook (`sun` for short), is a very simple note taking command-line application to save you from drawing a blank during stand-up meetings.
 The idea behind this application is to have a place to put short notes that are to short to track in a TODO list application but are still worth mentioning during the next stand-up meeting.
 
+ifdef::env-github[]
+== Documentation
+
+This documentation can best be viewed at https://stand-up-notes.org[stand-up-notes.org] because it contains an https://asciidoctor.org/[Asciidoctor] rendered version of this document with the proper attributes set and an svg rendered version of the diagram below.
+endif::[]
+
 == Installation
 
-=== From a GitHub release
+=== From a GitHub release (preferred)
 
 Find the appropriate zip file for your platform and architecture on the GitHub https://github.com/basbossink/sun/releases[releases] page, download it, unzip it, and put the unpacked binary file in your `PATH`.
 
@@ -71,4 +77,5 @@ Some care was taken to ensure sun can run in constant time. Entries are appended
 
 == License
 
-This software is provided under a "BSD 2-Clause License" see the link:LICENSE[LICENSE] for details.
+This software is provided under a "BSD 2-Clause License" see the link:LICENSE[LICENSE] for details. +
+(C) {docyear} Bas Bossink <bas dot bossink at gmail dot com>
