@@ -110,20 +110,9 @@ func (entry *entry) Write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := writeSizeSize(&buf, n); err != nil {
-		return err
-	}
+	buf.WriteByte(byte(n))
 	_, err = w.Write(buf.Bytes())
 	return err
-}
-
-func writeSizeSize(buf *bytes.Buffer, sizeSize int) error {
-	if written, errwr := buf.Write([]byte{byte(sizeSize)}); errwr != nil {
-		return errwr
-	} else if written != 1 {
-		return ErrInsufficientSize
-	}
-	return nil
 }
 
 func writeSize(buf *bytes.Buffer, size uint64) (int, error) {
