@@ -105,12 +105,12 @@ func TestConvertArgsToEntry(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			entry := convertArgsToEntry(tc.input)
 			if tc.expectedNote != entry.Note {
-				t.Fatalf("\n\texpected note:\n\t\t%#v\n\tgot:\t\t\t%#v",
+				t.Fatalf("\n\texpected note:\n\t\t%#v\n\tgot:\n\t\t%#v",
 					tc.expectedNote,
 					entry.Note)
 			}
 			if !reflect.DeepEqual(tc.expectedTags, entry.Tags) {
-				t.Fatalf("\n\texpected note:\n\t\t%#v\n\tgot:\t\t\t%#v",
+				t.Fatalf("\n\texpected tags:\n\t\t%#v\n\tgot:\n\t\t%#v",
 					tc.expectedTags,
 					entry.Tags)
 			}
