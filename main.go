@@ -207,7 +207,7 @@ func writeRow(w *tabwriter.Writer, entry *entry, prevDate string, dayCount int) 
 	return curDate, nextDayCount
 }
 
-func writeNewEntry(dataDir string, args []string) {
+func appendEntry(dataDir string, args []string) {
 	filename := calculateSunFilename(dataDir, time.Now().Year())
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
@@ -288,7 +288,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if len(os.Args) > 1 {
-		writeNewEntry(dataDir, os.Args[1:])
+		appendEntry(dataDir, os.Args[1:])
 	} else {
 		printLastEntries(dataDir)
 	}
