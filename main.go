@@ -106,23 +106,18 @@ func (entry *entry) Write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	n, err := writeSize(&buf, size)
-	if err != nil {
-		return err
-	}
+	n := writeSize(&buf, size)
 	buf.WriteByte(byte(n))
 	_, err = w.Write(buf.Bytes())
 	return err
 }
 
-func writeSize(buf *bytes.Buffer, size uint64) (int, error) {
+func writeSize(buf *bytes.Buffer, size uint64) int {
 	lenBuf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(lenBuf, size)
 	reduced := lenBuf[:n]
-	if _, errwr := buf.Write(reduced); errwr != nil {
-		return 0, errwr
-	}
-	return n, nil
+	buf.Write(reduced)
+	return n
 }
 
 func writeGob(buf *bytes.Buffer, entry *entry) (uint64, error) {
