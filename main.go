@@ -32,10 +32,9 @@ const (
 )
 
 var (
-	ErrInsufficientSize = errors.New("buffer is to small")
-	ErrFileCorrupt      = errors.New("corrupt file")
-	Version             string
-	CommitHash          string
+	errFileCorrupt = errors.New("corrupt file")
+	Version        string
+	CommitHash     string
 )
 
 type entry struct {
@@ -84,7 +83,7 @@ func readGobStart(slice []byte, varIntStart int) (int, error) {
 	slice = slice[varIntStart:]
 	dec, n := binary.Uvarint(slice)
 	if n <= 0 {
-		return 0, ErrFileCorrupt
+		return 0, errFileCorrupt
 	}
 	gobStart := varIntStart - int(dec)
 	return gobStart, nil
