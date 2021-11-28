@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -127,20 +128,35 @@ func writeGob(buf *bytes.Buffer, entry *entry) (uint64, error) {
 	return size, err
 }
 
-func ensureDataDir() (string, error) {
-	home, err := os.UserHomeDir()
+type osAbstraction interface {
+	UserHomeDir() (string, error)
+	MkdirAll(path string, perm fs.FileMode) error
+}
+
+type osImpl struct{}
+
+func (osi *osImpl) UserHomeDir() (string, error) {
+	return os.UserHomeDir()
+}
+
+func (osi *osImpl) MkdirAll(path string, perm fs.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+func ensureDataDir(osa osAbstraction, sunDataDir string) (string, error) {
+	home, err := osa.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
 	dataDir := filepath.Join(home, sunDataDir)
-	err = os.MkdirAll(dataDir, 0700)
+	err = osa.MkdirAll(dataDir, 0700)
 	if err != nil {
 		return "", err
 	}
 	return dataDir, nil
 }
 
-func openDataFile(dataDir string) (*os.File, error) {
+func openDataFile(dataDir string) (io.ReadCloser, error) {
 	filename, err := calculateFilename(dataDir)
 	if err != nil {
 		return nil, err
@@ -283,7 +299,7 @@ func main() {
 		fmt.Println(os.Args[0], " version: ", Version, CommitHash)
 		os.Exit(0)
 	}
-	dataDir, err := ensureDataDir()
+	dataDir, err := ensureDataDir(&osImpl{}, sunDataDir)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"io/fs"
 	"reflect"
 	"testing"
 	"time"
@@ -84,6 +85,59 @@ func TestWriteExactBytes(t *testing.T) {
 		})
 	}
 }
+
+type tc struct {
+	homeDir            string
+	homeDirError       error
+	homeDirCalled      bool
+	mkdirAllError      error
+	mkdirAllCalled     bool
+	mkdirAllCalledWant bool
+}
+
+func (osa *tc) UserHomeDir() (string, error) {
+	osa.homeDirCalled = true
+	return osa.homeDir, osa.homeDirError
+}
+
+func (osa *tc) MkdirAll(path string, perm fs.FileMode) error {
+	osa.mkdirAllCalled = true
+	return osa.mkdirAllError
+}
+
+func TestEnsureDataDir(t *testing.T) {
+	tests := map[string]tc{
+		"happy day":        {homeDir: "x", mkdirAllCalledWant: true},
+		"home dir failure": {homeDir: "", homeDirError: fs.ErrInvalid},
+		"MkdirAll failure": {homeDir: "", mkdirAllCalledWant: true, mkdirAllError: fs.ErrInvalid},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			dir, err := ensureDataDir(&tc, "")
+			if tc.homeDir != dir {
+				t.Fatalf("resulting dir, want: %#v got: %#v", tc.homeDir, dir)
+			}
+			if !tc.homeDirCalled {
+				t.Fatal("expect UserHomeDir to be called")
+			}
+			if tc.mkdirAllCalled != tc.mkdirAllCalledWant {
+				called := ""
+				if !tc.mkdirAllCalledWant {
+					called = "not "
+				}
+				t.Fatalf("expect MkdirAllCalled to %sbe called", called)
+			}
+			if tc.mkdirAllError != nil && tc.mkdirAllError != err {
+				t.Fatalf("expected error to propagate, want: %#v got: %#v", tc.mkdirAllError, err)
+			}
+			if tc.homeDirError != nil && tc.homeDirError != err {
+				t.Fatalf("expected error to propagate, want: %#v got: %#v", tc.homeDirError, err)
+			}
+		})
+	}
+}
+
 func TestConvertArgsToEntry(t *testing.T) {
 	tests := map[string]struct {
 		input        []string
