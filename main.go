@@ -28,6 +28,7 @@ const (
 	timeFormat           = "15:04:05"
 	dateDivider          = "\t ---\t ----------\t --------\t \t \t"
 	rowFormat            = "\t %s\t %s\t %s\t %s\t %s\t"
+	versionFlagHelp      = "show version and exit"
 )
 
 var (
@@ -261,6 +262,7 @@ func convertArgsToEntry(args []string) entry {
 	entry := entry{Note: note, Tags: tags, CreatedAt: time.Now()}
 	return entry
 }
+
 func usage() {
 	fmt.Fprintf(
 		flag.CommandLine.Output(),
@@ -271,11 +273,12 @@ func usage() {
 		"If no arguments are given, a table with the latest notes is shown.")
 	flag.PrintDefaults()
 }
+
 func main() {
 	showVersion := false
 	flag.Usage = usage
-	flag.BoolVar(&showVersion, "version", false, "show version and exit")
-	flag.BoolVar(&showVersion, "v", false, "show version and exit")
+	flag.BoolVar(&showVersion, "version", false, versionFlagHelp)
+	flag.BoolVar(&showVersion, "v", false, versionFlagHelp)
 	flag.Parse()
 	if showVersion {
 		fmt.Println(os.Args[0], " version: ", Version, CommitHash)
