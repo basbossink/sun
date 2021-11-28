@@ -156,8 +156,8 @@ func ensureDataDir(osa osAbstraction, sunDataDir string) (string, error) {
 	return dataDir, nil
 }
 
-func openDataFile(dataDir string) (io.ReadCloser, error) {
-	filename, err := calculateFilename(dataDir)
+func openDataFile(dataDir string, currentYear int, fsys fs.FS) (io.ReadCloser, error) {
+	filename, err := calculateFilename(dataDir, currentYear, fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -178,8 +178,8 @@ func openDataFile(dataDir string) (io.ReadCloser, error) {
 	return f, nil
 }
 
-func printLastEntries(dataDir string) {
-	f, err := openDataFile(dataDir)
+func printLastEntries(dataDir string, currentYear int, fsys fs.FS) {
+	f, err := openDataFile(dataDir, currentYear, fsys)
 	if err != nil {
 		return
 	}
@@ -246,13 +246,15 @@ func calculateSunFilename(dataDir string, year int) string {
 			sunDataFileExtension))
 }
 
-func calculateFilename(dataDir string) (string, error) {
-	currentYear := time.Now().Year()
+func calculateFilename(
+	dataDir string,
+	currentYear int,
+	fsys fs.FS) (string, error) {
 	filename := calculateSunFilename(dataDir, currentYear)
-	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
+	if _, err := fs.Stat(fsys, filename); errors.Is(err, os.ErrNotExist) {
 		previousYear := currentYear - 1
 		filename = calculateSunFilename(dataDir, previousYear)
-		if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
+		if _, err := fs.Stat(fsys, filename); errors.Is(err, os.ErrNotExist) {
 			return "", err
 		}
 		return filename, nil
@@ -306,6 +308,7 @@ func main() {
 	if len(os.Args) > 1 {
 		appendEntry(dataDir, os.Args[1:])
 	} else {
-		printLastEntries(dataDir)
+		currentYear := time.Now().Year()
+		printLastEntries(dataDir, currentYear, os.DirFS(dataDir))
 	}
 }

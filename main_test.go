@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io/fs"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -198,6 +199,90 @@ func TestConvertArgsToEntry(t *testing.T) {
 				t.Fatalf("\n\texpected tags:\n\t\t%#v\n\tgot:\n\t\t%#v",
 					tc.expectedTags,
 					entry.Tags)
+			}
+		})
+	}
+}
+
+func TestCalculateSunFilename(t *testing.T) {
+	want := "1337.sun"
+	if got := calculateSunFilename("", 1337); want != got {
+		t.Fatalf("want: %#v, got: %#v", want, got)
+	}
+}
+
+type mockFS struct {
+	files map[string]os.FileInfo
+}
+
+type mockFileInfo string
+
+func (mfi mockFileInfo) Name() string {
+	return "x"
+}
+
+func (mfi mockFileInfo) Size() int64 {
+	return 0
+}
+
+func (mfi mockFileInfo) Mode() fs.FileMode {
+	return 0700
+}
+
+func (mfi mockFileInfo) ModTime() time.Time {
+	return time.UnixMicro(0)
+}
+
+func (mfi mockFileInfo) IsDir() bool {
+	return false
+}
+
+func (mfi mockFileInfo) Sys() interface{} {
+	return nil
+}
+
+func (mfs *mockFS) Stat(name string) (os.FileInfo, error) {
+	if fi, ok := mfs.files[name]; ok {
+		return fi, nil
+	}
+	return nil, fs.ErrNotExist
+}
+
+func (mfs *mockFS) Open(name string) (fs.File, error) {
+	return nil, nil
+}
+
+func TestCalculateFilename(t *testing.T) {
+	const bogus mockFileInfo = "a"
+	tests := map[string]struct {
+		mfs      mockFS
+		wantName string
+		wantErr  error
+	}{
+		"empty dir": {
+			mfs:      mockFS{},
+			wantName: "",
+			wantErr:  fs.ErrNotExist,
+		},
+		"dir contains current year": {
+			mfs:      mockFS{files: map[string]fs.FileInfo{"1337.sun": bogus}},
+			wantName: "1337.sun",
+			wantErr:  nil,
+		},
+		"dir contains last year": {
+			mfs:      mockFS{files: map[string]fs.FileInfo{"1336.sun": bogus}},
+			wantName: "1336.sun",
+			wantErr:  nil,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := calculateFilename("", 1337, &tc.mfs)
+			if tc.wantErr != err {
+				t.Fatalf("want error: %#v got: %#v", tc.wantErr, err)
+			}
+			if tc.wantName != got {
+				t.Fatalf("want name: %#v got: %#v", tc.wantName, got)
 			}
 		})
 	}
