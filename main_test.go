@@ -20,7 +20,7 @@ func TestWriteRead(t *testing.T) {
 	var buf bytes.Buffer
 	write(anEntry, &buf, t)
 	r := bufio.NewReader(&buf)
-	er, err := NewReader(r)
+	er, err := newEntryReader(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestWriteTwiceReadTwice(t *testing.T) {
 	write(anEntry, &buf, t)
 
 	r := bufio.NewReader(&buf)
-	er, err := NewReader(r)
+	er, err := newEntryReader(r)
 	if err != nil {
 		t.Fatal(err)
 	}

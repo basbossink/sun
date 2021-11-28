@@ -47,7 +47,7 @@ type entryReader struct {
 	toProcess []byte
 }
 
-func NewReader(r io.Reader) (*entryReader, error) {
+func newEntryReader(r io.Reader) (*entryReader, error) {
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {
 		return &entryReader{}, err
@@ -168,7 +168,7 @@ func printLastEntries(dataDir string) {
 		return
 	}
 	defer f.Close()
-	er, err := NewReader(f)
+	er, err := newEntryReader(f)
 	if err != nil {
 		log.Fatalf("could not create entry reader %v", err)
 	}
