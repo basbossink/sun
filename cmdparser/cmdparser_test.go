@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestConvertArgsToEntry(t *testing.T) {
+func TestParseArgs(t *testing.T) {
 	tests := map[string]struct {
 		input        []string
 		expectedTags []string

@@ -47,6 +47,22 @@ func (fsb *fsBackend) NewWriter(name string) (io.WriteCloser, error) {
 	return f, nil
 }
 
+func (fsb *fsBackend) inDataDir(name string) string {
+	return filepath.Join(fsb.dataDir, name)
+}
+
+func (fsb *fsBackend) stat(name string) (fs.FileInfo, error) {
+	return os.Stat(fsb.inDataDir(name))
+}
+
+func (fsb *fsBackend) openFile(name string, flag int, perm fs.FileMode) (*os.File, error) {
+	return os.OpenFile(fsb.inDataDir(name), flag, perm)
+}
+
+type fsBackend struct {
+	dataDir string
+}
+
 func ensureDataDir(home string) (string, error) {
 	dataDir := filepath.Join(home, sunDataDir)
 	err := os.MkdirAll(dataDir, 0o700)
@@ -54,20 +70,4 @@ func ensureDataDir(home string) (string, error) {
 		return "", fmt.Errorf("unable to create data dir %#v, %w", dataDir, err)
 	}
 	return dataDir, nil
-}
-
-func (s *fsBackend) inDataDir(name string) string {
-	return filepath.Join(s.dataDir, name)
-}
-
-func (s *fsBackend) stat(name string) (fs.FileInfo, error) {
-	return os.Stat(s.inDataDir(name))
-}
-
-func (s *fsBackend) openFile(name string, flag int, perm fs.FileMode) (*os.File, error) {
-	return os.OpenFile(s.inDataDir(name), flag, perm)
-}
-
-type fsBackend struct {
-	dataDir string
 }
