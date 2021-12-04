@@ -16,6 +16,7 @@ const (
 
 type cmdParser struct {
 	flagset     *flag.FlagSet
+	appName     string
 	showVersion *bool
 	showHelp    *bool
 }
@@ -36,6 +37,13 @@ func (p *cmdParser) Parse(args []string) (*sun.Parsed, error) {
 }
 
 func (p *cmdParser) ShowUsage() {
+	fmt.Fprintf(
+		flag.CommandLine.Output(),
+		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
+		p.appName)
+	fmt.Fprintln(
+		flag.CommandLine.Output(),
+		"If no arguments are given, a table with the latest notes is shown.")
 	p.flagset.PrintDefaults()
 }
 
@@ -43,16 +51,18 @@ func NewCmdParser(appName string) sun.CmdParser {
 	set := flag.NewFlagSet(appName, flag.ContinueOnError)
 	showVersion := false
 	showHelp := false
-	set.Usage = func() { usage(appName) }
+	set.Usage = func() {}
 	set.BoolVar(&showVersion, "version", false, versionFlagHelp)
 	set.BoolVar(&showVersion, "v", false, versionFlagHelp)
 	set.BoolVar(&showHelp, "help", false, helpFlagHelp)
 	set.BoolVar(&showHelp, "h", false, helpFlagHelp)
-	return &cmdParser{
+	result := &cmdParser{
 		flagset:     set,
+		appName:     appName,
 		showVersion: &showVersion,
 		showHelp:    &showHelp,
 	}
+	return result
 }
 
 func parseArgs(args []string) ([]string, string) {
@@ -72,13 +82,13 @@ func parseArgs(args []string) ([]string, string) {
 	return tags, note
 }
 
-func usage(appName string) {
+func usage(p *cmdParser) {
 	fmt.Fprintf(
 		flag.CommandLine.Output(),
 		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
-		appName)
+		p.appName)
 	fmt.Fprintln(
 		flag.CommandLine.Output(),
 		"If no arguments are given, a table with the latest notes is shown.")
-	flag.PrintDefaults()
+	p.flagset.PrintDefaults()
 }
