@@ -4,7 +4,7 @@ docs version hash:
 clean:
     rm -Rf build
 tcov:
-    go test -json -coverprofile cover.out |tparse -all 
+    go test ./... -json -coverprofile cover.out |tparse -all 
     go tool cover -func=cover.out
 release: clean
     ./release.sh
