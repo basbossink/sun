@@ -14,43 +14,53 @@ func TestConvertArgsToEntry(t *testing.T) {
 		"single space": {
 			input:        []string{" "},
 			expectedTags: []string{},
-			expectedNote: ""},
+			expectedNote: "",
+		},
 		"single word": {
 			input:        []string{"x"},
 			expectedTags: []string{},
-			expectedNote: "x"},
+			expectedNote: "x",
+		},
 		"single arg multiple words": {
 			input:        []string{"x x"},
 			expectedTags: []string{},
-			expectedNote: "x x"},
+			expectedNote: "x x",
+		},
 		"multiple args single word": {
 			input:        []string{"x", " "},
 			expectedTags: []string{},
-			expectedNote: "x"},
+			expectedNote: "x",
+		},
 		"multiple args multiple words": {
 			input:        []string{"x", "y"},
 			expectedTags: []string{},
-			expectedNote: "x y"},
+			expectedNote: "x y",
+		},
 		"multiple args multiple words should trim": {
 			input:        []string{"x ", " y"},
 			expectedTags: []string{},
-			expectedNote: "x y"},
+			expectedNote: "x y",
+		},
 		"single tag": {
 			input:        []string{"@x"},
 			expectedTags: []string{"x"},
-			expectedNote: ""},
+			expectedNote: "",
+		},
 		"multiple args single tag": {
 			input:        []string{"@x ", "y"},
 			expectedTags: []string{"x"},
-			expectedNote: "y"},
+			expectedNote: "y",
+		},
 		"single arg multiple words single tag": {
 			input:        []string{"x @y x"},
 			expectedTags: []string{"y"},
-			expectedNote: "x x"},
+			expectedNote: "x x",
+		},
 		"multiple args mulitple tags": {
 			input:        []string{"@x ", "y", "z ", " @w"},
 			expectedTags: []string{"w", "x"},
-			expectedNote: "y z"},
+			expectedNote: "y z",
+		},
 	}
 
 	for name, tc := range tests {

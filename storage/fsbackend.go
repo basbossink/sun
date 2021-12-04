@@ -32,16 +32,15 @@ func (fsb *fsBackend) Exists(name string) (bool, int64) {
 }
 
 func (fsb *fsBackend) NewReader(name string) (io.ReadSeekCloser, error) {
-	f, err := fsb.openFile(name, os.O_RDONLY, 0600)
+	f, err := fsb.openFile(name, os.O_RDONLY, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("could not open data file %v, %w", name, err)
 	}
 	return f, nil
-
 }
 
 func (fsb *fsBackend) NewWriter(name string) (io.WriteCloser, error) {
-	f, err := fsb.openFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	f, err := fsb.openFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("could not open data file %v, %w", name, err)
 	}
@@ -50,7 +49,7 @@ func (fsb *fsBackend) NewWriter(name string) (io.WriteCloser, error) {
 
 func ensureDataDir(home string) (string, error) {
 	dataDir := filepath.Join(home, sunDataDir)
-	err := os.MkdirAll(dataDir, 0700)
+	err := os.MkdirAll(dataDir, 0o700)
 	if err != nil {
 		return "", fmt.Errorf("unable to create data dir %#v, %w", dataDir, err)
 	}

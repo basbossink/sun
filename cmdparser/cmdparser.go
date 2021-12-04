@@ -3,9 +3,10 @@ package cmdparser
 import (
 	"flag"
 	"fmt"
-	"github.com/basbossink/sun/sun"
 	"sort"
 	"strings"
+
+	"github.com/basbossink/sun/sun"
 )
 
 const (
@@ -80,15 +81,4 @@ func parseArgs(args []string) ([]string, string) {
 	sort.Strings(tags)
 	note := strings.Join(nonTagfields, " ")
 	return tags, note
-}
-
-func usage(p *cmdParser) {
-	fmt.Fprintf(
-		flag.CommandLine.Output(),
-		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
-		p.appName)
-	fmt.Fprintln(
-		flag.CommandLine.Output(),
-		"If no arguments are given, a table with the latest notes is shown.")
-	p.flagset.PrintDefaults()
 }

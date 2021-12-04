@@ -56,5 +56,3 @@ func (o *output) writeRow(entry *sun.Entry, prevDate string, dayCount int) (stri
 			entry.Note))
 	return curDate, nextDayCount
 }
-
- 

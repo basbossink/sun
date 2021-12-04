@@ -38,7 +38,8 @@ func NewEnv(appName string) sun.Environment {
 			fmt.Sprintf(
 				verbosePrefixFormat,
 				appName),
-			log.LstdFlags|log.Lmicroseconds|log.Lshortfile)}
+			log.LstdFlags|log.Lmicroseconds|log.Lshortfile),
+	}
 }
 
 func (e *environment) DataParentDir() (string, error) {

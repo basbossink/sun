@@ -12,13 +12,11 @@ import (
 	"github.com/basbossink/sun/sun"
 )
 
-var (
-	anEntry *sun.Entry = &sun.Entry{
-		Note:      "This is a note",
-		CreatedAt: time.Now(),
-		Tags:      []string{"test", "bla"},
-	}
-)
+var anEntry *sun.Entry = &sun.Entry{
+	Note:      "This is a note",
+	CreatedAt: time.Now(),
+	Tags:      []string{"test", "bla"},
+}
 
 func TestWriteRead(t *testing.T) {
 	var buf bytes.Buffer

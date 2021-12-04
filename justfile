@@ -8,3 +8,5 @@ tcov:
     go tool cover -func=cover.out
 release: clean
     ./release.sh
+lint:
+    golangci-lint run --enable-all
