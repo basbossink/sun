@@ -1,4 +1,4 @@
-package storage
+package main
 
 import (
 	"bytes"
@@ -8,13 +8,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-
-	"github.com/basbossink/sun/sun"
 )
 
 const (
 	bufSize              = 16 * 1024
-	sunDataDir           = ".sun.d"
+	sunDataDir           = ".d"
 	sunDataFileExtension = ".sun"
 )
 
@@ -23,24 +21,24 @@ var (
 	ErrNoData      = errors.New("no data in storage")
 )
 
-type storage struct {
-	env         sun.Environment
-	backend     Backend
+type storageData struct {
+	env         environment
+	backend     backend
 	currentYear int
 }
 
-func NewStorage(
-	env sun.Environment,
-	backend Backend,
-	currentYear int) sun.Storage {
-	return &storage{
+func newStorage(
+	env environment,
+	backend backend,
+	currentYear int) storage {
+	return &storageData{
 		env:         env,
 		backend:     backend,
 		currentYear: currentYear,
 	}
 }
 
-func (s *storage) NewEntryReader() (sun.EntryReadCloser, error) {
+func (s *storageData) newEntryReader() (entryReadCloser, error) {
 	r, err := s.openDataFile()
 	if err != nil {
 		return nil, err
@@ -48,13 +46,13 @@ func (s *storage) NewEntryReader() (sun.EntryReadCloser, error) {
 	return newEntryReader(r)
 }
 
-func (er *entryReader) Close() error {
+func (er *entryReaderState) close() error {
 	return er.f.Close()
 }
 
-func (s *storage) Write(entry *sun.Entry) error {
+func (s *storageData) write(entry *entry) error {
 	filename := calculateSunFilename(s.currentYear)
-	f, err := s.backend.NewWriter(filename)
+	f, err := s.backend.newWriter(filename)
 	if err != nil {
 		return err
 	}
@@ -66,36 +64,36 @@ func (s *storage) Write(entry *sun.Entry) error {
 	return nil
 }
 
-type entryReader struct {
+type entryReaderState struct {
 	toProcess []byte
 	f         io.Closer
 }
 
-func newEntryReader(r io.ReadCloser) (*entryReader, error) {
+func newEntryReader(r io.ReadCloser) (*entryReaderState, error) {
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {
-		return &entryReader{}, err
+		return &entryReaderState{}, err
 	}
-	return &entryReader{toProcess: buf, f: r}, nil
+	return &entryReaderState{toProcess: buf, f: r}, nil
 }
 
-func (reader *entryReader) Read() (*sun.Entry, error) {
+func (reader *entryReaderState) read() (*entry, error) {
 	if len(reader.toProcess) == 0 {
-		return &sun.Entry{}, io.EOF
+		return &entry{}, io.EOF
 	}
 	sizeSizePos := len(reader.toProcess) - 1
 	sizeSize := reader.toProcess[sizeSizePos]
 	sansSizeSize := reader.toProcess[:sizeSizePos]
 	varintStart := len(sansSizeSize) - int(sizeSize)
 	if varintStart < 0 {
-		return &sun.Entry{}, io.EOF
+		return &entry{}, io.EOF
 	}
 	gobStart, err := readGobStart(sansSizeSize, varintStart)
 	if err != nil {
-		return &sun.Entry{}, err
+		return &entry{}, err
 	}
 	if gobStart < 0 {
-		return &sun.Entry{}, io.EOF
+		return &entry{}, io.EOF
 	}
 	sansSize := sansSizeSize[gobStart:varintStart]
 	result, err := decode(sansSize)
@@ -113,18 +111,18 @@ func readGobStart(slice []byte, varIntStart int) (int, error) {
 	return gobStart, nil
 }
 
-func decode(slice []byte) (*sun.Entry, error) {
+func decode(slice []byte) (*entry, error) {
 	rr := bytes.NewReader(slice)
 	decoder := gob.NewDecoder(rr)
-	var result sun.Entry
+	var result entry
 	err := decoder.Decode(&result)
 	if err != nil {
-		return &sun.Entry{}, err
+		return &entry{}, err
 	}
 	return &result, nil
 }
 
-func write(w io.Writer, entry *sun.Entry) error {
+func write(w io.Writer, entry *entry) error {
 	var buf bytes.Buffer
 	size, err := writeGob(&buf, entry)
 	if err != nil {
@@ -144,24 +142,24 @@ func writeSize(buf *bytes.Buffer, size uint64) int {
 	return n
 }
 
-func writeGob(buf *bytes.Buffer, entry *sun.Entry) (uint64, error) {
+func writeGob(buf *bytes.Buffer, entry *entry) (uint64, error) {
 	enc := gob.NewEncoder(buf)
 	err := enc.Encode(entry)
 	size := uint64(buf.Len())
 	return size, err
 }
 
-func (s *storage) openDataFile() (io.ReadCloser, error) {
+func (s *storageData) openDataFile() (io.ReadCloser, error) {
 	filename, size := s.calculateFilename()
 	if size < 0 {
 		return nil, ErrNoData
 	}
-	f, err := s.backend.NewReader(filename)
+	f, err := s.backend.newReader(filename)
 	if err != nil {
 		return nil, err
 	}
 	if bufSize < size {
-		s.env.LogVerbose(fmt.Sprintf("data file number of bytes [%d] larger than [%d] performing seek", size, bufSize))
+		s.env.logVerbose(fmt.Sprintf("data file number of bytes [%d] larger than [%d] performing seek", size, bufSize))
 		_, errr := f.Seek(-1*bufSize, io.SeekEnd)
 		if errr != nil {
 			return nil, fmt.Errorf("could not seek in data file %v, %w", filename, errr)
@@ -177,28 +175,28 @@ func calculateSunFilename(year int) string {
 		sunDataFileExtension)
 }
 
-func (s *storage) calculateFilename() (string, int64) {
+func (s *storageData) calculateFilename() (string, int64) {
 	filename := calculateSunFilename(s.currentYear)
-	s.env.LogVerbose(fmt.Sprintf("first attempt filename %v", filename))
-	e, size := s.backend.Exists(filename)
+	s.env.logVerbose(fmt.Sprintf("first attempt filename %v", filename))
+	e, size := s.backend.exists(filename)
 	if !e {
 		previousYear := s.currentYear - 1
 		filename = calculateSunFilename(previousYear)
-		s.env.LogVerbose(fmt.Sprintf("second attempt filename %v", filename))
-		e, size := s.backend.Exists(filename)
+		s.env.logVerbose(fmt.Sprintf("second attempt filename %v", filename))
+		e, size := s.backend.exists(filename)
 		if !e {
-			s.env.LogVerbose("no data file found")
+			s.env.logVerbose("no data file found")
 			return "", -1
 		}
-		s.env.LogVerbose(fmt.Sprintf("returning (%v, %v)", filename, nil))
+		s.env.logVerbose(fmt.Sprintf("returning (%v, %v)", filename, nil))
 		return filename, size
 	}
-	s.env.LogVerbose(fmt.Sprintf("returning (%v, %v)", filename, nil))
+	s.env.logVerbose(fmt.Sprintf("returning (%v, %v)", filename, nil))
 	return filename, size
 }
 
-type Backend interface {
-	Exists(name string) (bool, int64)
-	NewReader(name string) (io.ReadSeekCloser, error)
-	NewWriter(name string) (io.WriteCloser, error)
+type backend interface {
+	exists(name string) (bool, int64)
+	newReader(name string) (io.ReadSeekCloser, error)
+	newWriter(name string) (io.WriteCloser, error)
 }

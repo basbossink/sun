@@ -1,12 +1,10 @@
-package output
+package main
 
 import (
 	"fmt"
 	"io"
 	"strings"
 	"text/tabwriter"
-
-	"github.com/basbossink/sun/sun"
 )
 
 const (
@@ -17,7 +15,7 @@ const (
 	rowFormat     = "\t %s\t %s\t %s\t %s\t %s\t"
 )
 
-func NewOutput(w io.Writer) sun.OutputWriter {
+func newOutput(w io.Writer) ouputWriter {
 	tw := tabwriter.NewWriter(w, 1, 1, 1, ' ', tabwriter.Debug)
 	return &output{w: tw}
 }
@@ -26,16 +24,16 @@ type output struct {
 	w *tabwriter.Writer
 }
 
-func (o *output) WriteTable(er sun.EntryReadCloser) {
+func (o *output) writeTable(er entryReader) {
 	prevDate := ""
 	dayCounter := 0
-	for entry, err := er.Read(); err != io.EOF && dayCounter < 2; entry, err = er.Read() {
+	for entry, err := er.read(); err != io.EOF && dayCounter < 2; entry, err = er.read() {
 		prevDate, dayCounter = o.writeRow(entry, prevDate, dayCounter)
 	}
 	o.w.Flush()
 }
 
-func (o *output) writeRow(entry *sun.Entry, prevDate string, dayCount int) (string, int) {
+func (o *output) writeRow(entry *entry, prevDate string, dayCount int) (string, int) {
 	nextDayCount := dayCount
 	curDate := entry.CreatedAt.Format(dateFormat)
 	if prevDate == "" {

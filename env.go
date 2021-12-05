@@ -1,12 +1,10 @@
-package env
+package main
 
 import (
 	"fmt"
 	"io"
 	"log"
 	"os"
-
-	"github.com/basbossink/sun/sun"
 )
 
 const (
@@ -15,18 +13,18 @@ const (
 	enableVerboseLogEnvKey = "SUN_DEBUG"
 )
 
-type environment struct {
+type loggers struct {
 	errorLogger   *log.Logger
 	verboseLogger *log.Logger
 }
 
-func NewEnv(appName string) sun.Environment {
+func newEnv(appName string) environment {
 	_, ok := os.LookupEnv(enableVerboseLogEnvKey)
 	w := io.Discard
 	if ok {
 		w = os.Stderr
 	}
-	return &environment{
+	return &loggers{
 		errorLogger: log.New(
 			os.Stderr,
 			fmt.Sprintf(
@@ -42,7 +40,7 @@ func NewEnv(appName string) sun.Environment {
 	}
 }
 
-func (e *environment) DataParentDir() (string, error) {
+func (e *loggers) dataParentDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("unable to get value of home dir %w", err)
@@ -50,14 +48,14 @@ func (e *environment) DataParentDir() (string, error) {
 	return home, nil
 }
 
-func (e *environment) Args() []string {
+func (e *loggers) args() []string {
 	return os.Args
 }
 
-func (e *environment) LogError(error error) {
+func (e *loggers) logError(error error) {
 	e.errorLogger.Println(error)
 }
 
-func (e *environment) LogVerbose(message string) {
+func (e *loggers) logVerbose(message string) {
 	e.verboseLogger.Println(message)
 }

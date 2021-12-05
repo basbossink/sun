@@ -1,12 +1,10 @@
-package cmdparser
+package main
 
 import (
 	"flag"
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/basbossink/sun/sun"
 )
 
 const (
@@ -15,29 +13,29 @@ const (
 	helpFlagHelp    = "show help and exit"
 )
 
-type cmdParser struct {
+type cmdParserData struct {
 	flagset     *flag.FlagSet
 	appName     string
 	showVersion *bool
 	showHelp    *bool
 }
 
-func (p *cmdParser) Parse(args []string) (*sun.Parsed, error) {
+func (p *cmdParserData) parse(args []string) (*parsed, error) {
 	err := p.flagset.Parse(args[1:])
 	if err != nil {
 		return nil, err
 	}
 	tags, note := parseArgs(args[1:])
-	return &sun.Parsed{
-		Tags:          tags,
-		Note:          note,
-		ShowVersion:   *p.showVersion,
-		ShowHelp:      *p.showHelp,
-		ReadRequested: len(args) == 1,
+	return &parsed{
+		tags:          tags,
+		note:          note,
+		showVersion:   *p.showVersion,
+		showHelp:      *p.showHelp,
+		readRequested: len(args) == 1,
 	}, nil
 }
 
-func (p *cmdParser) ShowUsage() {
+func (p *cmdParserData) showUsage() {
 	fmt.Fprintf(
 		flag.CommandLine.Output(),
 		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
@@ -48,7 +46,7 @@ func (p *cmdParser) ShowUsage() {
 	p.flagset.PrintDefaults()
 }
 
-func NewCmdParser(appName string) sun.CmdParser {
+func newCmdParser(appName string) cmdParser {
 	set := flag.NewFlagSet(appName, flag.ContinueOnError)
 	showVersion := false
 	showHelp := false
@@ -57,7 +55,7 @@ func NewCmdParser(appName string) sun.CmdParser {
 	set.BoolVar(&showVersion, "v", false, versionFlagHelp)
 	set.BoolVar(&showHelp, "help", false, helpFlagHelp)
 	set.BoolVar(&showHelp, "h", false, helpFlagHelp)
-	result := &cmdParser{
+	result := &cmdParserData{
 		flagset:     set,
 		appName:     appName,
 		showVersion: &showVersion,

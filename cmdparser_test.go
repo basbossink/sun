@@ -1,4 +1,4 @@
-package cmdparser
+package main
 
 import (
 	"reflect"

@@ -1,4 +1,4 @@
-package storage
+package main
 
 import (
 	"errors"
@@ -7,12 +7,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"github.com/basbossink/sun/sun"
 )
 
-func NewFSBackend(env sun.Environment) (Backend, error) {
-	parentDir, err := env.DataParentDir()
+func newFSBackend(env environment) (backend, error) {
+	parentDir, err := env.dataParentDir()
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +21,7 @@ func NewFSBackend(env sun.Environment) (Backend, error) {
 	return &fsBackend{dataDir: dataDir}, nil
 }
 
-func (fsb *fsBackend) Exists(name string) (bool, int64) {
+func (fsb *fsBackend) exists(name string) (bool, int64) {
 	fsi, err := fsb.stat(name)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, -1
@@ -31,7 +29,7 @@ func (fsb *fsBackend) Exists(name string) (bool, int64) {
 	return true, fsi.Size()
 }
 
-func (fsb *fsBackend) NewReader(name string) (io.ReadSeekCloser, error) {
+func (fsb *fsBackend) newReader(name string) (io.ReadSeekCloser, error) {
 	f, err := fsb.openFile(name, os.O_RDONLY, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("could not open data file %v, %w", name, err)
@@ -39,7 +37,7 @@ func (fsb *fsBackend) NewReader(name string) (io.ReadSeekCloser, error) {
 	return f, nil
 }
 
-func (fsb *fsBackend) NewWriter(name string) (io.WriteCloser, error) {
+func (fsb *fsBackend) newWriter(name string) (io.WriteCloser, error) {
 	f, err := fsb.openFile(name, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("could not open data file %v, %w", name, err)
