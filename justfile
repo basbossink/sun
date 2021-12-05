@@ -1,5 +1,5 @@
 build:
-	go build -o build/sun ./cmd/sun
+	go build -o build/sun
 
 clean:
     rm -Rf build

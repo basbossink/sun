@@ -18,14 +18,17 @@ func newFSBackend(env environment) (backend, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &fsBackend{dataDir: dataDir}, nil
+	env.logVerbose(fmt.Sprintf("using dataDir %#v", dataDir))
+	return &fsBackend{dataDir: dataDir, env: env}, nil
 }
 
 func (fsb *fsBackend) exists(name string) (bool, int64) {
 	fsi, err := fsb.stat(name)
 	if errors.Is(err, fs.ErrNotExist) {
+		fsb.env.logVerbose(fmt.Sprintf("%#v does not exist", name))
 		return false, -1
 	}
+	fsb.env.logVerbose(fmt.Sprintf("%#v exists, size %v", name, fsi.Size()))
 	return true, fsi.Size()
 }
 
@@ -46,7 +49,9 @@ func (fsb *fsBackend) newWriter(name string) (io.WriteCloser, error) {
 }
 
 func (fsb *fsBackend) inDataDir(name string) string {
-	return filepath.Join(fsb.dataDir, name)
+	returnValue := filepath.Join(fsb.dataDir, name)
+	fsb.env.logVerbose(fmt.Sprintf("inDataDir returns %#v", returnValue))
+	return returnValue
 }
 
 func (fsb *fsBackend) stat(name string) (fs.FileInfo, error) {
@@ -58,6 +63,7 @@ func (fsb *fsBackend) openFile(name string, flag int, perm fs.FileMode) (*os.Fil
 }
 
 type fsBackend struct {
+	env     environment
 	dataDir string
 }
 

@@ -12,7 +12,7 @@ import (
 
 const (
 	bufSize              = 16 * 1024
-	sunDataDir           = ".d"
+	sunDataDir           = ".sun.d"
 	sunDataFileExtension = ".sun"
 )
 
