@@ -5,6 +5,89 @@ import (
 	"testing"
 )
 
+func TestFlags(t *testing.T) {
+	tests := map[string]struct {
+		args    []string
+		wantErr bool
+		want    *parsed
+	}{
+		"show version short": {
+			args:    []string{"", "-v"},
+			wantErr: false,
+			want: &parsed{
+				tags:          []string{},
+				note:          "",
+				showVersion:   true,
+				showHelp:      false,
+				readRequested: false,
+			},
+		},
+		"show version long": {
+			args:    []string{"", "-version"},
+			wantErr: false,
+			want: &parsed{
+				tags:          []string{},
+				note:          "",
+				showVersion:   true,
+				showHelp:      false,
+				readRequested: false,
+			},
+		},
+		"show help short": {
+			args:    []string{"", "-h"},
+			wantErr: false,
+			want: &parsed{
+				tags:          []string{},
+				note:          "",
+				showVersion:   false,
+				showHelp:      true,
+				readRequested: false,
+			},
+		},
+		"show help long": {
+			args:    []string{"", "-help"},
+			wantErr: false,
+			want: &parsed{
+				tags:          []string{},
+				note:          "",
+				showVersion:   false,
+				showHelp:      true,
+				readRequested: false,
+			},
+		},
+		"no flags": {
+			args:    []string{""},
+			wantErr: false,
+			want: &parsed{
+				tags:          []string{},
+				note:          "",
+				showVersion:   false,
+				showHelp:      false,
+				readRequested: true,
+			},
+		},
+		"erroneous flag": {
+			args:    []string{"", "-this-will-not-be-valid-flag"},
+			wantErr: true,
+			want:    nil,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			parser := newCmdParser("")
+			parsed, err := parser.parse(tc.args)
+			if tc.wantErr && err == nil {
+				t.Fatal("expected parse error but got nil")
+			}
+			if !reflect.DeepEqual(tc.want, parsed) {
+				t.Fatalf("\n\texpected parsed:\n\t\t%#v\n\tgot:\n\t\t%#v",
+					tc.want,
+					parsed)
+			}
+		})
+	}
+}
+
 func TestParseArgs(t *testing.T) {
 	tests := map[string]struct {
 		input        []string

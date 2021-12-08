@@ -26,12 +26,18 @@ func (p *cmdParserData) parse(args []string) (*parsed, error) {
 		return nil, err
 	}
 	tags, note := parseArgs(args[1:])
+	readRequested := len(args) == 1
+	if *p.showHelp || *p.showVersion {
+		tags = []string{}
+		note = ""
+		readRequested = false
+	}
 	return &parsed{
 		tags:          tags,
 		note:          note,
 		showVersion:   *p.showVersion,
 		showHelp:      *p.showHelp,
-		readRequested: len(args) == 1,
+		readRequested: readRequested,
 	}, nil
 }
 
