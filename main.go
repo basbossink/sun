@@ -24,6 +24,7 @@ func run() int {
 	output := newOutput(os.Stdout)
 	app := newApp(
 		name,
+		os.Stdout,
 		env,
 		cmd,
 		storage,

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"time"
 )
 
@@ -57,6 +58,7 @@ type app interface {
 
 type appData struct {
 	name        string
+	stdOut      io.Writer
 	env         environment
 	cmdParser   cmdParser
 	storage     storage
@@ -69,6 +71,7 @@ type appData struct {
 
 func newApp(
 	name string,
+	stdOut io.Writer,
 	env environment,
 	cmdParser cmdParser,
 	storage storage,
@@ -79,6 +82,7 @@ func newApp(
 	currentYear int) app {
 	return &appData{
 		name:        name,
+		stdOut:      stdOut,
 		env:         env,
 		cmdParser:   cmdParser,
 		storage:     storage,
@@ -106,7 +110,7 @@ func (app *appData) run() int {
 		return 0
 	}
 	if parsed.showVersion {
-		fmt.Println(app.name, " version: ", app.version, app.commitHash)
+		fmt.Fprintln(app.stdOut, app.name, "version:", app.version, app.commitHash)
 		return 0
 	}
 
