@@ -44,6 +44,17 @@ func TestFlags(t *testing.T) {
 				readRequested: false,
 			},
 		},
+		"combine short": {
+			args:    []string{"", "-h", "-v"},
+			wantErr: false,
+			want: &parsed{
+				tags:          []string{},
+				note:          "",
+				showVersion:   true,
+				showHelp:      true,
+				readRequested: false,
+			},
+		},
 		"show help long": {
 			args:    []string{"", "-help"},
 			wantErr: false,

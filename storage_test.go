@@ -174,6 +174,62 @@ func TestCalculateFilename(t *testing.T) {
 	}
 }
 
+const (
+	note = `彼女の速いコースをスピードアップするためのより良い波
+	私の天才の軽い樹皮が帆を持ち上げ、
+	とても残酷な海を後に残してください。
+	そして、その2番目の地域の私は歌います、
+	罪深いしみからの人間の精神
+	パージされ、天国への上昇のために準備します。`
+	tag = "セントヴィンセントおよびグレナディーン諸島"
+)
+
+var (
+	tags      = []string{tag, tag, tag, tag, tag}
+	someTime  = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+	someEntry = &entry{Note: note, Tags: tags, CreatedAt: someTime}
+)
+
+func BenchmarkWrite(b *testing.B) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := write(w, someEntry)
+		if err != nil {
+			b.Fatal(err)
+		}
+		w.Flush()
+	}
+}
+
+func BenchmarkRead(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		var buf bytes.Buffer
+		w := bufio.NewWriter(&buf)
+		err := write(w, someEntry)
+		if err != nil {
+			b.Fatal(err)
+		}
+		w.Flush()
+		r := ioutil.NopCloser(bufio.NewReader(&buf))
+		er, err := newEntryReader(r)
+		if err != nil {
+			b.Fatal(err)
+		}
+		b.StartTimer()
+		entry, err := er.read()
+		b.StopTimer()
+		if err != nil {
+			b.Fatal(err)
+		}
+		if !entry.CreatedAt.Equal(someEntry.CreatedAt) {
+			b.Fatal("read failed")
+		}
+	}
+}
+
 func writeT(entry *entry, buf *bytes.Buffer, t *testing.T) {
 	w := bufio.NewWriter(buf)
 	err := write(w, entry)
