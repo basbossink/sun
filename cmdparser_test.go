@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -85,7 +87,7 @@ func TestFlags(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			parser := newCmdParser("")
+			parser := newCmdParser("", io.Discard)
 			parsed, err := parser.parse(tc.args)
 			if tc.wantErr && err == nil {
 				t.Fatal("expected parse error but got nil")
@@ -96,6 +98,17 @@ func TestFlags(t *testing.T) {
 					parsed)
 			}
 		})
+	}
+}
+
+func TestShowUsage(t *testing.T) {
+	var buf strings.Builder
+	const name = "1337"
+	parser := newCmdParser(name, &buf)
+	parser.showUsage()
+	got := buf.String()
+	if !strings.Contains(got, "Usage") || !strings.Contains(got, name) {
+		t.Fatalf("wanted usage to contain [Usage, %v] but got %#v", name, got)
 	}
 }
 

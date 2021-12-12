@@ -15,7 +15,7 @@ func run() int {
 	currentYear := now.Year()
 	name := os.Args[0]
 	env := newEnv(name)
-	cmd := newCmdParser(name)
+	cmd := newCmdParser(name, os.Stderr)
 	backend, err := newFSBackend(env)
 	if err != nil {
 		return 1

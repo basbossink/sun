@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 )
@@ -14,6 +15,7 @@ const (
 )
 
 type cmdParserData struct {
+	w           io.Writer
 	flagset     *flag.FlagSet
 	appName     string
 	showVersion *bool
@@ -43,17 +45,18 @@ func (p *cmdParserData) parse(args []string) (*parsed, error) {
 
 func (p *cmdParserData) showUsage() {
 	fmt.Fprintf(
-		flag.CommandLine.Output(),
+		p.w,
 		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
 		p.appName)
 	fmt.Fprintln(
-		flag.CommandLine.Output(),
+		p.w,
 		"If no arguments are given, a table with the latest notes is shown.")
 	p.flagset.PrintDefaults()
 }
 
-func newCmdParser(appName string) cmdParser {
+func newCmdParser(appName string, out io.Writer) cmdParser {
 	set := flag.NewFlagSet(appName, flag.ContinueOnError)
+	set.SetOutput(out)
 	showVersion := false
 	showHelp := false
 	set.Usage = func() {}
@@ -62,6 +65,7 @@ func newCmdParser(appName string) cmdParser {
 	set.BoolVar(&showHelp, "help", false, helpFlagHelp)
 	set.BoolVar(&showHelp, "h", false, helpFlagHelp)
 	result := &cmdParserData{
+		w:           out,
 		flagset:     set,
 		appName:     appName,
 		showVersion: &showVersion,
