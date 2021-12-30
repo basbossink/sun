@@ -76,7 +76,7 @@ func TestRunShowsHelp(t *testing.T) {
 			showHelp: true,
 		},
 	}
-	var app = newApp(
+	app := newApp(
 		"",
 		&stdOut,
 		&envDouble{},
@@ -109,7 +109,7 @@ func TestRunShowsVersion(t *testing.T) {
 		hash    = "yyy"
 	)
 
-	var app = newApp(
+	app := newApp(
 		name,
 		&stdOut,
 		&envDouble{},
@@ -143,7 +143,7 @@ func TestRunPrintsEntries(t *testing.T) {
 	}
 	sd := &storageDouble{}
 	owd := &outputWriterDouble{}
-	var app = newApp(
+	app := newApp(
 		"",
 		&stdOut,
 		&envDouble{},
@@ -207,7 +207,7 @@ func TestRunWritesEntry(t *testing.T) {
 	}
 	sd := &storageDouble{}
 	owd := &outputWriterDouble{}
-	var app = newApp(
+	app := newApp(
 		"",
 		&stdOut,
 		&envDouble{},

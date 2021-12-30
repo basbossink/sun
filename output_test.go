@@ -68,6 +68,7 @@ func TestDayDelimiter(t *testing.T) {
 		t.Fatalf("expected output to have 3 lines, but got %#v", got)
 	}
 }
+
 func TestDayDelimiterAbsent(t *testing.T) {
 	erd := &entryReaderDouble{
 		results: []entry{
