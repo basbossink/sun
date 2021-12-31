@@ -20,10 +20,12 @@ type loggers struct {
 
 func newEnv(appName string) environment {
 	_, ok := os.LookupEnv(enableVerboseLogEnvKey)
-	w := io.Discard
+	verboseWriter := io.Discard
+
 	if ok {
-		w = os.Stderr
+		verboseWriter = os.Stderr
 	}
+
 	return &loggers{
 		errorLogger: log.New(
 			os.Stderr,
@@ -32,7 +34,7 @@ func newEnv(appName string) environment {
 				appName),
 			0),
 		verboseLogger: log.New(
-			w,
+			verboseWriter,
 			fmt.Sprintf(
 				verbosePrefixFormat,
 				appName),
@@ -45,6 +47,7 @@ func (e *loggers) dataParentDir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to get value of home dir %w", err)
 	}
+
 	return home, nil
 }
 
@@ -52,8 +55,8 @@ func (e *loggers) args() []string {
 	return os.Args
 }
 
-func (e *loggers) logError(error error) {
-	e.errorLogger.Println(error)
+func (e *loggers) logError(err error) {
+	e.errorLogger.Println(err)
 }
 
 func (e *loggers) logVerbose(message string) {

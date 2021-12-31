@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -17,6 +18,7 @@ const (
 
 func newOutput(w io.Writer) ouputWriter {
 	tw := tabwriter.NewWriter(w, 1, 1, 1, ' ', tabwriter.Debug)
+
 	return &output{w: tw}
 }
 
@@ -27,22 +29,27 @@ type output struct {
 func (o *output) writeTable(er entryReader) {
 	prevDate := ""
 	dayCounter := 0
-	for entry, err := er.read(); err != io.EOF && dayCounter < 2; entry, err = er.read() {
+
+	for entry, err := er.read(); !errors.Is(err, io.EOF) && dayCounter < 2; entry, err = er.read() {
 		prevDate, dayCounter = o.writeRow(entry, prevDate, dayCounter)
 	}
+
 	o.w.Flush()
 }
 
 func (o *output) writeRow(entry *entry, prevDate string, dayCount int) (string, int) {
 	nextDayCount := dayCount
 	curDate := entry.CreatedAt.Format(dateFormat)
+
 	if prevDate == "" {
 		prevDate = curDate
 	}
+
 	if prevDate != curDate {
 		fmt.Fprintln(o.w, dateDivider)
 		nextDayCount++
 	}
+
 	fmt.Fprintln(
 		o.w,
 		fmt.Sprintf(
@@ -52,5 +59,6 @@ func (o *output) writeRow(entry *entry, prevDate string, dayCount int) (string, 
 			entry.CreatedAt.Format(timeFormat),
 			strings.Join(entry.Tags, " "),
 			entry.Note))
+
 	return curDate, nextDayCount
 }

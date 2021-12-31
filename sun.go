@@ -42,7 +42,7 @@ type storage interface {
 }
 
 type environment interface {
-	logError(error error)
+	logError(err error)
 	logVerbose(format string)
 	dataParentDir() (string, error)
 	args() []string
@@ -98,25 +98,33 @@ func (app *appData) run() int {
 	app.env.logVerbose("configured verbose logging")
 	parsed, err := app.cmdParser.parse(app.env.args())
 	app.env.logVerbose("parsed flags")
+
 	if err != nil {
 		app.cmdParser.showUsage()
+
 		if errors.Is(flag.ErrHelp, err) {
 			return 0
 		}
+
 		return -1
 	}
+
 	if parsed.showHelp {
 		app.cmdParser.showUsage()
+
 		return 0
 	}
+
 	if parsed.showVersion {
 		fmt.Fprintln(app.stdOut, app.name, "version:", app.version, app.commitHash)
+
 		return 0
 	}
 
 	if parsed.readRequested {
 		if err := app.printLastEntries(); err != nil {
 			app.env.logError(err)
+
 			return -1
 		}
 	} else {
@@ -126,18 +134,23 @@ func (app *appData) run() int {
 			CreatedAt: app.now,
 		}); err != nil {
 			app.env.logError(err)
+
 			return -1
 		}
 	}
+
 	return 0
 }
 
 func (app *appData) printLastEntries() error {
-	f, err := app.storage.newEntryReader()
+	entryReader, err := app.storage.newEntryReader()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not create reader %w", err)
 	}
-	defer f.close()
-	app.output.writeTable(f)
+
+	defer entryReader.close()
+
+	app.output.writeTable(entryReader)
+
 	return nil
 }

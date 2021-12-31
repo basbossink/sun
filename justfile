@@ -11,8 +11,9 @@ docs version hash:
 
 fumpt:
 	gofumpt -w .
+
 lint:
-    golangci-lint run --enable-all
+    golangci-lint run --enable-all --disable=maligned,golint,scopelint,interfacer
 
 release: clean
     ./release.sh

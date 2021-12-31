@@ -16,21 +16,28 @@ func (erd *entryReaderDouble) read() (*entry, error) {
 	if erd.index < len(erd.results) {
 		e := erd.results[erd.index]
 		erd.index++
+
 		return &e, nil
 	}
-	return &entry{}, io.EOF
+
+	return nil, io.EOF
 }
 
 func TestEmptyTable(t *testing.T) {
-	erd := &entryReaderDouble{}
-	got := act(erd)
-	if len(got) > 0 {
+	t.Parallel()
+
+	erd := &entryReaderDouble{index: 0, results: []entry{}}
+
+	if got := act(erd); len(got) > 0 {
 		t.Fatalf("expected no output but got %v", got)
 	}
 }
 
 func TestSingleRowTable(t *testing.T) {
+	t.Parallel()
+
 	erd := &entryReaderDouble{
+		index: 0,
 		results: []entry{
 			{
 				Note:      "x",
@@ -41,6 +48,7 @@ func TestSingleRowTable(t *testing.T) {
 	}
 
 	got := strings.TrimSpace(act(erd))
+
 	cols := strings.FieldsFunc(got, func(r rune) bool { return r == '|' })
 	if len(cols) != 5 {
 		t.Fatalf("expected output to have 5 columns, but got %#v", cols)
@@ -48,7 +56,10 @@ func TestSingleRowTable(t *testing.T) {
 }
 
 func TestDayDelimiter(t *testing.T) {
+	t.Parallel()
+
 	erd := &entryReaderDouble{
+		index: 0,
 		results: []entry{
 			{
 				Note:      "x",
@@ -63,6 +74,7 @@ func TestDayDelimiter(t *testing.T) {
 		},
 	}
 	got := act(erd)
+
 	lines := strings.Count(got, "\n")
 	if lines != 3 {
 		t.Fatalf("expected output to have 3 lines, but got %#v", got)
@@ -70,7 +82,10 @@ func TestDayDelimiter(t *testing.T) {
 }
 
 func TestDayDelimiterAbsent(t *testing.T) {
+	t.Parallel()
+
 	erd := &entryReaderDouble{
+		index: 0,
 		results: []entry{
 			{
 				Note:      "x",
@@ -90,6 +105,7 @@ func TestDayDelimiterAbsent(t *testing.T) {
 		},
 	}
 	got := act(erd)
+
 	lines := strings.Count(got, "\n")
 	if lines != 4 {
 		t.Fatalf("expected output to have 4 lines, but got %#v", got)
@@ -97,7 +113,10 @@ func TestDayDelimiterAbsent(t *testing.T) {
 }
 
 func TestThreeDayBoundaries(t *testing.T) {
+	t.Parallel()
+
 	erd := &entryReaderDouble{
+		index: 0,
 		results: []entry{
 			{
 				Note:      "x",
@@ -122,6 +141,7 @@ func TestThreeDayBoundaries(t *testing.T) {
 		},
 	}
 	got := act(erd)
+
 	lines := strings.Count(got, "\n")
 	if lines != 5 {
 		t.Fatalf("expected output to have 5 lines, but got %#v", got)
@@ -130,8 +150,11 @@ func TestThreeDayBoundaries(t *testing.T) {
 
 func act(er entryReader) string {
 	var sb strings.Builder
+
 	o := newOutput(&sb)
 	o.writeTable(er)
+
 	got := sb.String()
+
 	return got
 }

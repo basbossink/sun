@@ -85,16 +85,23 @@ func TestFlags(t *testing.T) {
 			want:    nil,
 		},
 	}
+
+	t.Parallel()
+
 	for name, tc := range tests {
+		testCase := tc
+
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			parser := newCmdParser("", io.Discard)
-			parsed, err := parser.parse(tc.args)
-			if tc.wantErr && err == nil {
+			parsed, err := parser.parse(testCase.args)
+			if testCase.wantErr && err == nil {
 				t.Fatal("expected parse error but got nil")
 			}
-			if !reflect.DeepEqual(tc.want, parsed) {
+			if !reflect.DeepEqual(testCase.want, parsed) {
 				t.Fatalf("\n\texpected parsed:\n\t\t%#v\n\tgot:\n\t\t%#v",
-					tc.want,
+					testCase.want,
 					parsed)
 			}
 		})
@@ -102,12 +109,16 @@ func TestFlags(t *testing.T) {
 }
 
 func TestShowUsage(t *testing.T) {
+	t.Parallel()
+
 	var buf strings.Builder
+
 	const name = "1337"
+
 	parser := newCmdParser(name, &buf)
 	parser.showUsage()
-	got := buf.String()
-	if !strings.Contains(got, "Usage") || !strings.Contains(got, name) {
+
+	if got := buf.String(); !strings.Contains(got, "Usage") || !strings.Contains(got, name) {
 		t.Fatalf("wanted usage to contain [Usage, %v] but got %#v", name, got)
 	}
 }
@@ -163,24 +174,30 @@ func TestParseArgs(t *testing.T) {
 			expectedTags: []string{"y"},
 			expectedNote: "x x",
 		},
-		"multiple args mulitple tags": {
+		"multiple args multiple tags": {
 			input:        []string{"@x ", "y", "z ", " @w"},
 			expectedTags: []string{"w", "x"},
 			expectedNote: "y z",
 		},
 	}
 
+	t.Parallel()
+
 	for name, tc := range tests {
+		testCase := tc
+
 		t.Run(name, func(t *testing.T) {
-			tags, note := parseArgs(tc.input)
-			if tc.expectedNote != note {
+			t.Parallel()
+
+			tags, note := parseArgs(testCase.input)
+			if testCase.expectedNote != note {
 				t.Fatalf("\n\texpected note:\n\t\t%#v\n\tgot:\n\t\t%#v",
-					tc.expectedNote,
+					testCase.expectedNote,
 					note)
 			}
-			if !reflect.DeepEqual(tc.expectedTags, tags) {
+			if !reflect.DeepEqual(testCase.expectedTags, tags) {
 				t.Fatalf("\n\texpected tags:\n\t\t%#v\n\tgot:\n\t\t%#v",
-					tc.expectedTags,
+					testCase.expectedTags,
 					tags)
 			}
 		})

@@ -17,7 +17,7 @@ func (owd *outputWriterDouble) writeTable(r entryReader) {
 
 type envDouble struct{}
 
-func (ed *envDouble) logError(error error)     {}
+func (ed *envDouble) logError(err error)       {}
 func (ed *envDouble) logVerbose(format string) {}
 func (ed *envDouble) dataParentDir() (string, error) {
 	return "", nil
@@ -29,9 +29,9 @@ func (ed *envDouble) args() []string {
 
 type cmdParserDouble struct {
 	parseCalled     bool
+	showUsageCalled bool
 	parseResult     *parsed
 	errorResult     error
-	showUsageCalled bool
 }
 
 func (cpd *cmdParserDouble) showUsage() {
@@ -40,6 +40,7 @@ func (cpd *cmdParserDouble) showUsage() {
 
 func (cpd *cmdParserDouble) parse(args []string) (*parsed, error) {
 	cpd.parseCalled = true
+
 	return cpd.parseResult, cpd.errorResult
 }
 
@@ -50,82 +51,112 @@ type storageDouble struct {
 	newEntryReaderErorr error
 }
 
-func (sd *storageDouble) close() error {
-	sd.closeCalled = true
+func (storD *storageDouble) close() error {
+	storD.closeCalled = true
+
 	return nil
 }
 
-func (sd *storageDouble) read() (*entry, error) {
-	sd.readCalled = true
-	return &entry{}, nil
+func (storD *storageDouble) read() (*entry, error) {
+	storD.readCalled = true
+
+	return &entry{Note: "", Tags: []string{}, CreatedAt: time.Time{}}, nil
 }
 
-func (sd *storageDouble) newEntryReader() (entryReadCloser, error) {
-	return sd, sd.newEntryReaderErorr
+func (storD *storageDouble) newEntryReader() (entryReadCloser, error) {
+	return storD, storD.newEntryReaderErorr
 }
 
-func (sd *storageDouble) write(entry *entry) error {
-	sd.writeCalled = true
+func (storD *storageDouble) write(entry *entry) error {
+	storD.writeCalled = true
+
 	return nil
 }
 
 func TestRunShowsHelp(t *testing.T) {
+	t.Parallel()
+
 	var stdOut strings.Builder
+
 	cmdPD := &cmdParserDouble{
+		parseCalled:     false,
+		showUsageCalled: false,
+		errorResult:     nil,
 		parseResult: &parsed{
-			showHelp: true,
+			showHelp:      true,
+			showVersion:   false,
+			readRequested: false,
+			tags:          []string{},
+			note:          "",
 		},
 	}
+
 	app := newApp(
 		"",
 		&stdOut,
 		&envDouble{},
 		cmdPD,
-		&storageDouble{},
-		&outputWriterDouble{},
+		nil,
+		nil,
 		"v1.0.1",
 		"aoeu",
 		time.UnixMilli(0),
 		1337)
+
 	app.run()
+
 	if !cmdPD.parseCalled {
 		t.Fatal("expecting parse to be called")
 	}
+
 	if !cmdPD.showUsageCalled {
 		t.Fatal("expecting showUsage to be called")
 	}
 }
 
 func TestRunShowsVersion(t *testing.T) {
+	t.Parallel()
+
 	var stdOut strings.Builder
-	cmdPD := &cmdParserDouble{
-		parseResult: &parsed{
-			showVersion: true,
-		},
-	}
+
 	const (
 		name    = "Fred"
 		version = "xxx"
 		hash    = "yyy"
 	)
 
+	cmdPD := &cmdParserDouble{
+		parseCalled:     false,
+		showUsageCalled: false,
+		errorResult:     nil,
+		parseResult: &parsed{
+			readRequested: false,
+			showHelp:      false,
+			showVersion:   true,
+			tags:          []string{},
+			note:          "",
+		},
+	}
+
 	app := newApp(
 		name,
 		&stdOut,
 		&envDouble{},
 		cmdPD,
-		&storageDouble{},
-		&outputWriterDouble{},
+		nil,
+		nil,
 		version,
 		hash,
 		time.UnixMilli(0),
 		1337)
+
 	app.run()
+
 	if !cmdPD.parseCalled {
 		t.Fatal("expecting parse to be called")
 	}
-	gotOut := stdOut.String()
-	if !strings.Contains(gotOut, name) || !strings.Contains(gotOut, version) || !strings.Contains(gotOut, hash) {
+
+	if gotOut := stdOut.String(); !containsAll(gotOut, name, version, hash) {
 		t.Fatalf("expecting version output to contain [ %s, %s, %s ], but got %#v",
 			name,
 			version,
@@ -134,51 +165,97 @@ func TestRunShowsVersion(t *testing.T) {
 	}
 }
 
+func containsAll(input string, toContain ...string) bool {
+	for _, item := range toContain {
+		if !strings.Contains(input, item) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func TestRunPrintsEntries(t *testing.T) {
+	t.Parallel()
+
 	var stdOut strings.Builder
+
 	cmdPD := &cmdParserDouble{
+		parseCalled:     false,
+		showUsageCalled: false,
+		errorResult:     nil,
 		parseResult: &parsed{
+			showHelp:      false,
+			showVersion:   false,
 			readRequested: true,
+			tags:          []string{},
+			note:          "",
 		},
 	}
-	sd := &storageDouble{}
-	owd := &outputWriterDouble{}
+	storD := &storageDouble{
+		writeCalled:         false,
+		readCalled:          false,
+		closeCalled:         false,
+		newEntryReaderErorr: nil,
+	}
+	owd := &outputWriterDouble{writeCalled: false}
 	app := newApp(
 		"",
 		&stdOut,
 		&envDouble{},
 		cmdPD,
-		sd,
+		storD,
 		owd,
 		"v1.0.1",
 		"aoeu",
 		time.UnixMilli(0),
 		1337)
+
 	app.run()
+
 	if !cmdPD.parseCalled {
 		t.Fatal("expecting parse to be called")
 	}
-	if !sd.closeCalled {
+
+	if !storD.closeCalled {
 		t.Fatal("expecting close to be called")
 	}
+
 	if !owd.writeCalled {
 		t.Fatal("expecting writeTable to be called")
 	}
 }
 
 func TestPrintEntries(t *testing.T) {
+	t.Parallel()
+
 	var stdOut strings.Builder
-	cmdPD := &cmdParserDouble{}
-	sd := &storageDouble{
-		newEntryReaderErorr: errors.New("xxx"),
+
+	cmdPD := &cmdParserDouble{
+		parseCalled:     false,
+		showUsageCalled: false,
+		errorResult:     nil,
+		parseResult: &parsed{
+			showVersion:   false,
+			readRequested: true,
+			showHelp:      false,
+			tags:          []string{},
+			note:          "",
+		},
 	}
-	owd := &outputWriterDouble{}
+	storD := &storageDouble{
+		writeCalled:         false,
+		readCalled:          false,
+		closeCalled:         false,
+		newEntryReaderErorr: errors.New("xxx"), //nolint:goerr113
+	}
+	owd := &outputWriterDouble{writeCalled: false}
 	app := &appData{
 		name:        "",
 		stdOut:      &stdOut,
 		env:         &envDouble{},
 		cmdParser:   cmdPD,
-		storage:     sd,
+		storage:     storD,
 		output:      owd,
 		now:         time.UnixMilli(0),
 		currentYear: 1337,
@@ -186,43 +263,63 @@ func TestPrintEntries(t *testing.T) {
 		commitHash:  "aoeu",
 	}
 	goterr := app.printLastEntries()
-	if sd.closeCalled {
+
+	if storD.closeCalled {
 		t.Fatal("expecting close not to be called")
 	}
+
 	if owd.writeCalled {
 		t.Fatal("expecting writeTable to be called")
 	}
-	if !errors.Is(sd.newEntryReaderErorr, goterr) {
-		t.Fatalf("expecting %v, but got %v", sd.newEntryReaderErorr, goterr)
+
+	if !errors.Is(goterr, storD.newEntryReaderErorr) {
+		t.Fatalf("expecting %v, but got %v", storD.newEntryReaderErorr, goterr)
 	}
 }
 
 func TestRunWritesEntry(t *testing.T) {
+	t.Parallel()
+
 	var stdOut strings.Builder
+
 	cmdPD := &cmdParserDouble{
+		parseCalled:     false,
+		showUsageCalled: false,
+		errorResult:     nil,
 		parseResult: &parsed{
-			note: "x",
-			tags: []string{"y"},
+			showVersion:   false,
+			showHelp:      false,
+			readRequested: false,
+			note:          "x",
+			tags:          []string{"y"},
 		},
 	}
-	sd := &storageDouble{}
-	owd := &outputWriterDouble{}
+	storD := &storageDouble{
+		writeCalled:         false,
+		readCalled:          false,
+		closeCalled:         false,
+		newEntryReaderErorr: nil,
+	}
+	owd := &outputWriterDouble{writeCalled: false}
 	app := newApp(
 		"",
 		&stdOut,
 		&envDouble{},
 		cmdPD,
-		sd,
+		storD,
 		owd,
 		"v1.0.1",
 		"aoeu",
 		time.UnixMilli(0),
 		1337)
+
 	app.run()
+
 	if !cmdPD.parseCalled {
 		t.Fatal("expecting parse to be called")
 	}
-	if !sd.writeCalled {
+
+	if !storD.writeCalled {
 		t.Fatal("expecting write to be called")
 	}
 }

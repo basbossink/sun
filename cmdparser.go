@@ -15,7 +15,7 @@ const (
 )
 
 type cmdParserData struct {
-	w           io.Writer
+	writer      io.Writer
 	flagset     *flag.FlagSet
 	appName     string
 	showVersion *bool
@@ -25,15 +25,18 @@ type cmdParserData struct {
 func (p *cmdParserData) parse(args []string) (*parsed, error) {
 	err := p.flagset.Parse(args[1:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parsed arguments %w", err)
 	}
+
 	tags, note := parseArgs(args[1:])
 	readRequested := len(args) == 1
+
 	if *p.showHelp || *p.showVersion {
 		tags = []string{}
 		note = ""
 		readRequested = false
 	}
+
 	return &parsed{
 		tags:          tags,
 		note:          note,
@@ -45,38 +48,42 @@ func (p *cmdParserData) parse(args []string) (*parsed, error) {
 
 func (p *cmdParserData) showUsage() {
 	fmt.Fprintf(
-		p.w,
+		p.writer,
 		"Usage of %s: [option] [sentence describing activity to note, words beginning with an @ are taken to be tags]\n",
 		p.appName)
 	fmt.Fprintln(
-		p.w,
+		p.writer,
 		"If no arguments are given, a table with the latest notes is shown.")
 	p.flagset.PrintDefaults()
 }
 
 func newCmdParser(appName string, out io.Writer) cmdParser {
 	set := flag.NewFlagSet(appName, flag.ContinueOnError)
-	set.SetOutput(out)
 	showVersion := false
 	showHelp := false
 	set.Usage = func() {}
+
+	set.SetOutput(out)
 	set.BoolVar(&showVersion, "version", false, versionFlagHelp)
 	set.BoolVar(&showVersion, "v", false, versionFlagHelp)
 	set.BoolVar(&showHelp, "help", false, helpFlagHelp)
 	set.BoolVar(&showHelp, "h", false, helpFlagHelp)
+
 	result := &cmdParserData{
-		w:           out,
+		writer:      out,
 		flagset:     set,
 		appName:     appName,
 		showVersion: &showVersion,
 		showHelp:    &showHelp,
 	}
+
 	return result
 }
 
 func parseArgs(args []string) ([]string, string) {
 	tags := make([]string, 0, len(args))
 	nonTagfields := make([]string, 0, len(args))
+
 	for _, arg := range args {
 		for _, field := range strings.Fields(arg) {
 			if strings.HasPrefix(field, tagPrefix) {
@@ -86,7 +93,10 @@ func parseArgs(args []string) ([]string, string) {
 			}
 		}
 	}
+
 	sort.Strings(tags)
+
 	note := strings.Join(nonTagfields, " ")
+
 	return tags, note
 }

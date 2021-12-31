@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+//nolint:gochecknoglobals
 var anEntry *entry = &entry{
 	Note:      "This is a note",
 	CreatedAt: time.Now(),
@@ -17,49 +18,66 @@ var anEntry *entry = &entry{
 }
 
 func TestWriteRead(t *testing.T) {
+	t.Parallel()
+
 	var buf bytes.Buffer
-	writeT(anEntry, &buf, t)
+
+	writeT(t, anEntry, &buf)
+
 	r := ioutil.NopCloser(bufio.NewReader(&buf))
+
 	er, err := newEntryReader(r)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	got, err := er.read()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertEqual(anEntry, got, t)
+
+	assertEqual(t, anEntry, got)
 }
 
 func TestWriteTwiceReadTwice(t *testing.T) {
+	t.Parallel()
+
 	var buf bytes.Buffer
-	writeT(anEntry, &buf, t)
-	writeT(anEntry, &buf, t)
+
+	writeT(t, anEntry, &buf)
+	writeT(t, anEntry, &buf)
 
 	r := ioutil.NopCloser(bufio.NewReader(&buf))
-	er, err := newEntryReader(r)
+
+	entryReader, err := newEntryReader(r)
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := er.read()
+
+	got, err := entryReader.read()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertEqual(anEntry, got, t)
-	got2, err := er.read()
+
+	assertEqual(t, anEntry, got)
+
+	got2, err := entryReader.read()
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertEqual(anEntry, got2, t)
+
+	assertEqual(t, anEntry, got2)
 }
 
 func TestWriteExactBytes(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		input entry
 		want  []byte
 	}{
 		"empty entry": {
-			input: entry{},
+			input: entry{Note: "", Tags: []string{}, CreatedAt: time.Time{}},
 			want:  []byte{0x35, 0xff, 0x81, 0x3, 0x1, 0x1, 0x5, 0x65, 0x6e, 0x74, 0x72, 0x79, 0x1, 0xff, 0x82, 0x0, 0x1, 0x3, 0x1, 0x4, 0x4e, 0x6f, 0x74, 0x65, 0x1, 0xc, 0x0, 0x1, 0x9, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x1, 0xff, 0x84, 0x0, 0x1, 0x4, 0x54, 0x61, 0x67, 0x73, 0x1, 0xff, 0x86, 0x0, 0x0, 0x0, 0x10, 0xff, 0x83, 0x5, 0x1, 0x1, 0x4, 0x54, 0x69, 0x6d, 0x65, 0x1, 0xff, 0x84, 0x0, 0x0, 0x0, 0x16, 0xff, 0x85, 0x2, 0x1, 0x1, 0x8, 0x5b, 0x5d, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x1, 0xff, 0x86, 0x0, 0x1, 0xc, 0x0, 0x0, 0x3, 0xff, 0x82, 0x0, 0x62, 0x1},
 		},
 		"simple entry": {
@@ -71,16 +89,21 @@ func TestWriteExactBytes(t *testing.T) {
 			want:  []byte{0x35, 0xff, 0x81, 0x3, 0x1, 0x1, 0x5, 0x65, 0x6e, 0x74, 0x72, 0x79, 0x1, 0xff, 0x82, 0x0, 0x1, 0x3, 0x1, 0x4, 0x4e, 0x6f, 0x74, 0x65, 0x1, 0xc, 0x0, 0x1, 0x9, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x1, 0xff, 0x84, 0x0, 0x1, 0x4, 0x54, 0x61, 0x67, 0x73, 0x1, 0xff, 0x86, 0x0, 0x0, 0x0, 0x10, 0xff, 0x83, 0x5, 0x1, 0x1, 0x4, 0x54, 0x69, 0x6d, 0x65, 0x1, 0xff, 0x84, 0x0, 0x0, 0x0, 0x16, 0xff, 0x85, 0x2, 0x1, 0x1, 0x8, 0x5b, 0x5d, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x1, 0xff, 0x86, 0x0, 0x1, 0xc, 0x0, 0x0, 0x1f, 0xff, 0x82, 0x1, 0x3, 0x78, 0x20, 0x79, 0x1, 0xf, 0x1, 0x0, 0x0, 0x0, 0xe, 0x77, 0x91, 0xf7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3c, 0x1, 0x2, 0x1, 0x77, 0x1, 0x7a, 0x0, 0x7e, 0x1},
 		},
 	}
+
 	for name, tc := range tests {
+		testCase := tc
+
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			var buf bytes.Buffer
-			if err := write(&buf, &tc.input); err != nil {
+			if err := write(&buf, &testCase.input); err != nil {
 				t.Fatal(err)
 			}
 			bytes := buf.Bytes()
-			if !reflect.DeepEqual(bytes, tc.want) {
+			if !reflect.DeepEqual(bytes, testCase.want) {
 				t.Fatalf("\n\texpected bytes:\n\t\t%#v\n\tgot:\n\t\t%#v",
-					tc.want,
+					testCase.want,
 					bytes)
 			}
 		})
@@ -88,7 +111,10 @@ func TestWriteExactBytes(t *testing.T) {
 }
 
 func TestCalculateSunFilename(t *testing.T) {
-	want := "1337.sun"
+	t.Parallel()
+
+	const want = "1337.sun"
+
 	if got := calculateSunFilename(1337); want != got {
 		t.Fatalf("want: %#v, got: %#v", want, got)
 	}
@@ -102,6 +128,7 @@ func (mfs *mockBackend) exists(name string) (bool, int64) {
 	if _, ok := mfs.files[name]; ok {
 		return ok, 37
 	}
+
 	return false, -1
 }
 
@@ -123,13 +150,15 @@ func (e *nilEnv) args() []string {
 	return nil
 }
 
-func (e *nilEnv) logError(error error) {
+func (e *nilEnv) logError(err error) {
 }
 
 func (e *nilEnv) logVerbose(message string) {
 }
 
 func TestCalculateFilename(t *testing.T) {
+	t.Parallel()
+
 	mfs := &mockBackend{
 		files: map[string]bool{
 			"1.sun": true,
@@ -156,19 +185,24 @@ func TestCalculateFilename(t *testing.T) {
 			wantSize:    37,
 		},
 	}
+
 	for name, tc := range tests {
+		testCase := tc
+
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			st := &storageData{
 				env:         &nilEnv{},
 				backend:     mfs,
-				currentYear: tc.currentYear,
+				currentYear: testCase.currentYear,
 			}
 			got, size := st.calculateFilename()
-			if tc.wantSize != size {
-				t.Fatalf("want error: %#v got: %#v, %#v", tc.wantSize, got, size)
+			if testCase.wantSize != size {
+				t.Fatalf("want error: %#v got: %#v, %#v", testCase.wantSize, got, size)
 			}
-			if tc.wantName != got {
-				t.Fatalf("want name: %#v got: %#v", tc.wantName, got)
+			if testCase.wantName != got {
+				t.Fatalf("want name: %#v got: %#v", testCase.wantName, got)
 			}
 		})
 	}
@@ -184,6 +218,7 @@ const (
 	tag = "セントヴィンセントおよびグレナディーン諸島"
 )
 
+//nolint:gochecknoglobals
 var (
 	tags      = []string{tag, tag, tag, tag, tag}
 	someTime  = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
@@ -192,65 +227,88 @@ var (
 
 func BenchmarkWrite(b *testing.B) {
 	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
+
+	writer := bufio.NewWriter(&buf)
+
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
-		err := write(w, someEntry)
+		err := write(writer, someEntry)
 		if err != nil {
 			b.Fatal(err)
 		}
-		w.Flush()
+
+		writer.Flush()
 	}
 }
 
 func BenchmarkRead(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
+
 		var buf bytes.Buffer
-		w := bufio.NewWriter(&buf)
-		err := write(w, someEntry)
+
+		writer := bufio.NewWriter(&buf)
+
+		err := write(writer, someEntry)
 		if err != nil {
 			b.Fatal(err)
 		}
-		w.Flush()
+
+		writer.Flush()
+
 		r := ioutil.NopCloser(bufio.NewReader(&buf))
-		er, err := newEntryReader(r)
+
+		entryReader, err := newEntryReader(r)
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		b.StartTimer()
-		entry, err := er.read()
+
+		entry, err := entryReader.read()
+
 		b.StopTimer()
+
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		if !entry.CreatedAt.Equal(someEntry.CreatedAt) {
 			b.Fatal("read failed")
 		}
 	}
 }
 
-func writeT(entry *entry, buf *bytes.Buffer, t *testing.T) {
-	w := bufio.NewWriter(buf)
-	err := write(w, entry)
-	if err != nil {
+func writeT(t *testing.T, entry *entry, buf io.Writer) {
+	t.Helper()
+
+	writer := bufio.NewWriter(buf)
+
+	if err := write(writer, entry); err != nil {
 		t.Fatal(err)
 	}
-	w.Flush()
+
+	writer.Flush()
 }
 
-func assertEqual(want, got *entry, t *testing.T) {
+func assertEqual(t *testing.T, want, got *entry) {
+	t.Helper()
+
 	if want.Note != got.Note {
 		t.Fatalf("\n\texpected note:\n\t\t%#v\n\tgot:\n\t\t%#v", want.Note, got.Note)
 	}
+
 	// Using DeepEqual does not work for Time instances
 	// since the gob roundtrip loses the monotonic time private
 	// part of the Time instance.
 	origTime := want.CreatedAt.Format(time.RFC3339Nano)
 	gotTime := got.CreatedAt.Format(time.RFC3339Nano)
+
 	if origTime != gotTime {
 		t.Fatalf("\n\texpected created at:\n\t\t%#v\n\tgot:\n\t\t%#v", origTime, gotTime)
 	}
+
 	if !reflect.DeepEqual(want.Tags, got.Tags) {
 		t.Fatalf("\n\texpected tags:\n\t\t%v\n\tgot:\n\t\t%v", want.Tags, got.Tags)
 	}

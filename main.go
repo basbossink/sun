@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+//nolint:gochecknoglobals
 var (
 	Version    string
 	CommitHash string
@@ -16,10 +17,12 @@ func run() int {
 	name := os.Args[0]
 	env := newEnv(name)
 	cmd := newCmdParser(name, os.Stderr)
+
 	backend, err := newFSBackend(env)
 	if err != nil {
 		return 1
 	}
+
 	storage := newStorage(env, backend, currentYear)
 	output := newOutput(os.Stdout)
 	app := newApp(
@@ -34,6 +37,7 @@ func run() int {
 		now,
 		currentYear,
 	)
+
 	return app.run()
 }
 
