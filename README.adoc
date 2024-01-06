@@ -15,7 +15,7 @@ endif::[]
 
 === From a GitHub release (preferred)
 
-Find the appropriate zip file for your platform and architecture on the GitHub https://github.com/basbossink/sun/releases[releases] page, download it, unzip it, and put the unpacked binary file in your `PATH`.
+Find the appropriate zip file for your platform and architecture on the GitHub https://github.com/jyankhomen/sun/releases[releases] page, download it, unzip it, and put the unpacked binary file in your `PATH`.
 
 === From sources
 
@@ -23,7 +23,7 @@ Installing sun from sources requires https://golang.org/[Go] to be installed. On
 
 [source,sh,subs="attributes+"]
 ----
-go install -ldflags "-s -w -X main.Version={version} -X main.CommitHash={hash}" github.com/basbossink/sun@{version}
+go install -ldflags "-s -w -X main.Version={version} -X main.CommitHash={hash}" github.com/jyankhomen/sun@{1.0}
 ----
 
 == Usage 
@@ -78,4 +78,4 @@ Some care was taken to ensure sun can run in constant time. Entries are appended
 == License
 
 This software is provided under a "BSD 2-Clause License" see the link:LICENSE[LICENSE] for details. +
-(C) {docyear} Bas Bossink <bas dot bossink at gmail dot com>
+(C) {docyear} vecna k <vecna-the-undying at proton dot me>
